@@ -16,7 +16,9 @@ import copy
 import os
 
 #paths should be input as strings
-def mood_overlay(content_img_path, style_img_path):
+def mood_overlay(content_img_path, style_img_path, output_path):
+    print("Content", content_img_path)
+    print("Style", style_img_path)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -51,7 +53,7 @@ def mood_overlay(content_img_path, style_img_path):
         plt.imshow(image)
         if title is not None:
             plt.title(title)
-        plt.pause(0.001) # pause a bit so that plots are updated
+        # plt.pause(0.001) # pause a bit so that plots are updated
 
 
     # plt.figure()
@@ -60,6 +62,7 @@ def mood_overlay(content_img_path, style_img_path):
     # plt.figure()
     # imshow(content_img, title='Content Image')
 
+    print("Processing 1")
 
     class ContentLoss(nn.Module):
 
@@ -88,6 +91,7 @@ def mood_overlay(content_img_path, style_img_path):
         # by dividing by the number of element in each feature maps.
         return G.div(a * b * c * d)
 
+    print("Processing 2")
 
     class StyleLoss(nn.Module):
 
@@ -124,6 +128,8 @@ def mood_overlay(content_img_path, style_img_path):
     # desired depth layers to compute style/content losses :
     content_layers_default = ['conv_4']
     style_layers_default = ['conv_1', 'conv_2', 'conv_3', 'conv_4', 'conv_5']
+
+    print("Processing 3")
 
     def get_style_model_and_losses(cnn, normalization_mean, normalization_std,
                                 style_img, content_img,
@@ -186,14 +192,15 @@ def mood_overlay(content_img_path, style_img_path):
 
     input_img = content_img.clone()
 
-    # add the original input image to the figure:
+    print("add the original input image to the figure:")
     plt.figure()
     imshow(input_img, title='Input Image')
-
     def get_input_optimizer(input_img):
+        print("Processing 4")
         # this line to show that input is a parameter that requires a gradient
         optimizer = optim.LBFGS([input_img])
         return optimizer
+
 
     def run_style_transfer(cnn, normalization_mean, normalization_std,
                         content_img, style_img, input_img, num_steps=500,
@@ -258,13 +265,13 @@ def mood_overlay(content_img_path, style_img_path):
 
     # Save the result
     output_pil = transforms.ToPILImage()(output.squeeze(0).cpu())
-    output_pil.save("./result.jpg")
+    output_pil.save(output_path)
     print("Image saved as result.jpg")
     # Show the result
-    plt.figure()
-    imshow(output, title="Output Image")
-    plt.ioff()
-    plt.show()
+    # plt.figure()
+    # imshow(output, title="Output Image")
+    # plt.ioff()
+    # plt.show()
 
 
 # def main():
