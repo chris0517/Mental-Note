@@ -1,47 +1,42 @@
 import React, { useState } from "react";
 import { Container, TextField, Button, Card, CardMedia, Typography } from "@mui/material";
+import { analyzeText, uploadImages } from "./api"; // Import API functions
 
 const Home = () => {
   const [text, setText] = useState("");
   const [emotion, setEmotion] = useState(null);
   const [imageUrl, setImageUrl] = useState("");
+  const [contentFile, setContentFile] = useState(null);
+  const [styleFile, setStyleFile] = useState(null);
+  const [outputImage, setOutputImage] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const handleAnalyze = async () => {
-    if (!text) return;
-
-    try {
-      const response = await fetch("http://127.0.0.1:5000/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
-      });
-
-      const data = await response.json();
-      setEmotion(data.emotion.label);
-      setImageUrl(`/imgs/${data.emotion.label}.jpg`); // Load from public/imgs/
-    } catch (error) {
-      console.error("Error fetching data:", error);
+    const result = await analyzeText(text);
+    if (result.error) {
+      setError(result.error);
+      return;
     }
-    console.log(imageUrl);
+
+    setEmotion(result.emotion);
+    setImageUrl(result.imageUrl);
+    setStyleFile(result.styleFile);
+    console.log("Analyzed imageUrl:", result.imageUrl);
   };
 
-  const handleStyle = async () => {
-    if (!text) return;
+  const handleUpload = async () => {
+    setLoading(true);
+    setError(null);
 
-    try {
-      const response = await fetch("http://127.0.0.1:5000/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
-      });
-
-      const data = await response.json();
-      setEmotion(data.emotion.label);
-      setImageUrl(`/imgs/${data.emotion.label}.jpg`); // Load from public/imgs/
-    } catch (error) {
-      console.error("Error fetching data:", error);
+    const result = await uploadImages(contentFile, styleFile);
+    if (result.error) {
+      setError(result.error);
+    } else {
+      setOutputImage(result.outputImageUrl);
     }
-    console.log(imageUrl);
+
+    setLoading(false);
   };
 
   return (
@@ -57,7 +52,7 @@ const Home = () => {
         onChange={(e) => setText(e.target.value)}
         sx={{ mb: 2 }}
       />
-      <Button variant="contained" color="primary" onClick={handleAnalyze}>
+      <Button variant="contained" color="primary" onClick={handleAnalyze} sx={{ mb: 2 }}>
         Analyze Emotion
       </Button>
 
@@ -73,8 +68,33 @@ const Home = () => {
           />
         </Card>
       )}
+
+      <input
+        type="file"
+        accept="image/*"
+        onChange={(e) => setContentFile(e.target.files[0])}
+        style={{ marginTop: "20px" }}
+      />
+      <Button onClick={handleUpload} disabled={loading} variant="contained" color="secondary" sx={{ mt: 2 }}>
+        {loading ? "Processing..." : "Stylize Image"}
+      </Button>
+
+      {error && <p style={{ color: "red" }}>{error}</p>}
+
+      {outputImage && (
+        <Card sx={{ mt: 3, p: 2 }}>
+          <Typography variant="h6">Stylized Image:</Typography>
+          <CardMedia
+            component="img"
+            height="300"
+            image={outputImage}
+            alt="Stylized Output"
+            sx={{ mt: 2, borderRadius: 2 }}
+          />
+        </Card>
+      )}
     </Container>
   );
-}
+};
 
 export default Home;

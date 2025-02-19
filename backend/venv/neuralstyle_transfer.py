@@ -44,7 +44,7 @@ def mood_overlay(content_img_path, style_img_path, output_path):
     
     unloader = transforms.ToPILImage()  # reconvert into PIL image
 
-    plt.ion()
+    # plt.ion()
 
     def imshow(tensor, title=None):
         image = tensor.cpu().clone()  # we clone the tensor to not do changes on it

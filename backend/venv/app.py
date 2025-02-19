@@ -6,6 +6,7 @@ import os
 from sentiment_analysis import analyze_sentiment
 from werkzeug.utils import secure_filename
 from neuralstyle_transfer import mood_overlay
+from datetime import datetime
 
 app = Flask(__name__)
 CORS(app)  # Allow frontend to call backend
@@ -76,6 +77,7 @@ def allowed_file(filename):
 
 @app.route("/stylize", methods=["POST"])
 def stylize_image():
+    print("request: ", request.files)
     if "content" not in request.files or "style" not in request.files:
         return jsonify({"error": "Both content and style images are required"}), 400
 
@@ -104,7 +106,11 @@ def stylize_image():
         print({"output_image": f"/results/{output_filename}"})
         print("Output path:", output_path)
         
-        return jsonify({"output_image": f"/results/{output_filename}"})
+        current_date = datetime.now().strftime("%Y%m%d")
+        dated_output_filename = f"{current_date}_{output_filename}"
+        dated_output_path = os.path.join(OUTPUT_FOLDER, dated_output_filename)
+        os.rename(output_path, dated_output_path)
+        return jsonify({"output_image": f"/results/{dated_output_filename}"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
