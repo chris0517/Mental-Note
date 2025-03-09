@@ -1,3 +1,7 @@
 serviceAccountKey.json
 backend/venv/__pycache__/
 frontend/node_modules/
+backend/venv/results/
+backend/venv/uploads/
+frontend/mental note/src/components/api/.env
+

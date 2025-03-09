@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Container, TextField, Button, Card, CardMedia, Typography } from "@mui/material";
-import { analyzeText, uploadImages } from "./api"; // Import API functions
+import { analyzeText, uploadImages } from "./api/api"; // Import API functions
 
 const Home = () => {
   const [text, setText] = useState("");
@@ -40,8 +40,7 @@ const Home = () => {
   };
 
   return (
-    <Container maxWidth="sm" sx={{ textAlign: "center", mt: 5 }}>
-      <Typography variant="h4" gutterBottom>Mental Notes</Typography>
+    <Container maxWidth="sm" sx={{ textAlign: "center", mt: 5, padding:5}}>
       <TextField
         label="Enter your thoughts..."
         variant="outlined"

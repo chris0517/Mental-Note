@@ -204,9 +204,9 @@ def mood_overlay(content_img_path, style_img_path, output_path):
 
     def run_style_transfer(cnn, normalization_mean, normalization_std,
                         content_img, style_img, input_img, num_steps=500,
-                        style_weight=1000000, content_weight=1):
+                        style_weight=50000, content_weight=1):
     #    """Run the style transfer."""
-    #    print('Building the style transfer model..')
+        print('Building the style transfer model..')
         model, style_losses, content_losses = get_style_model_and_losses(cnn,
             normalization_mean, normalization_std, style_img, content_img)
 

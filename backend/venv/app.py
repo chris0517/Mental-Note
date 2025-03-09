@@ -77,7 +77,8 @@ def allowed_file(filename):
 
 @app.route("/stylize", methods=["POST"])
 def stylize_image():
-    print("request: ", request.files)
+    print("Line 80: request: ", request.files)
+
     if "content" not in request.files or "style" not in request.files:
         return jsonify({"error": "Both content and style images are required"}), 400
 
@@ -85,20 +86,31 @@ def stylize_image():
     style_file = request.files["style"]
 
     if not (allowed_file(content_file.filename) and allowed_file(style_file.filename)):
+        print({"error": "Invalid file format. Allowed formats: PNG, JPG, JPEG"})
         return jsonify({"error": "Invalid file format. Allowed formats: PNG, JPG, JPEG"}), 400
 
-    # Save uploaded files
+    # Get original filenames securely
     content_filename = secure_filename(content_file.filename)
     style_filename = secure_filename(style_file.filename)
+
+    # Define save paths for content & style images
     content_path = os.path.join(UPLOAD_FOLDER, content_filename)
     style_path = os.path.join(UPLOAD_FOLDER, style_filename)
+
+    # Save files
     content_file.save(content_path)
     style_file.save(style_path)
 
-    # Generate styled image
-    output_filename = f"styled_{content_filename}"
+    # Generate a single date-based filename for the output image
+    current_date = datetime.now().strftime("%Y%m%d")  # e.g., "20240305"
+    output_filename = f"{current_date}.jpg"
     output_path = os.path.join(OUTPUT_FOLDER, output_filename)
-    
+
+    # Check if the output file already exists
+    if os.path.exists(output_path):
+        print({"error": "An image for today's date already exists."})
+        return jsonify({"error": "An image for today's date already exists."}), 400
+
     try:
         print("Applying neural style transfer...")
         mood_overlay(content_path, style_path, output_path)  # Apply neural style transfer
@@ -106,13 +118,10 @@ def stylize_image():
         print({"output_image": f"/results/{output_filename}"})
         print("Output path:", output_path)
         
-        current_date = datetime.now().strftime("%Y%m%d")
-        dated_output_filename = f"{current_date}_{output_filename}"
-        dated_output_path = os.path.join(OUTPUT_FOLDER, dated_output_filename)
-        os.rename(output_path, dated_output_path)
-        return jsonify({"output_image": f"/results/{dated_output_filename}"})
+        return jsonify({"output_image": f"/results/{output_filename}"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 @app.route("/imgs/<filename>")
 def serve_image(filename):
@@ -123,5 +132,35 @@ def serve_result_image(filename):
     print("Serving file from results:", filename)
     return send_from_directory(OUTPUT_FOLDER, filename)
 
+IMAGE_DIR = os.path.join(BASE_DIR, "results")
+
+@app.route("/image-files")
+def list_image_files():
+    """Returns a list of available image filenames without extensions."""
+    try:
+        images = [f.split('.')[0] for f in os.listdir(IMAGE_DIR) if f.endswith(('.jpg', '.png'))]
+        print(f"Images found: {images}")  # Debug print
+        return jsonify(images)
+    except Exception as e:
+        print(f"Error listing images: {e}")  # Debug print
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/fetch-image/<filename>")
+def fetch_image(filename):
+    """Serves an image if it exists."""
+    try:
+        file_path = os.path.join(IMAGE_DIR, filename)
+        if os.path.exists(file_path):
+            print(f"Serving image: {file_path}")  # Debug print
+            return send_from_directory(IMAGE_DIR, filename)
+        else:
+            print(f"Image not found: {file_path}")  # Debug print
+            return jsonify({"error": "Image not found"}), 404
+    except Exception as e:
+        print(f"Error serving image {filename}: {e}")  # Debug print
+        return jsonify({"error": str(e)}), 500
+
+    
+    
 if __name__ == "__main__":
     app.run(debug=True)
